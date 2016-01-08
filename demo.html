@@ -21,6 +21,7 @@
     }
 
     function _base64ToArrayBuffer(base64) {
+        base64 = base64.replace(new RegExp(/\s/g),'')
         var binary_string =  window.atob(base64);
         var len = binary_string.length;
         var bytes = new Uint8Array( len );
@@ -30,31 +31,39 @@
         return bytes;
     }
 
-    function playAmrArray(array) {
-        var samples = AMR.decode(array);
-        if (!samples) {
-            alert('Failed to decode!');
-            return;
+    function playAmrArray(data) {
+        if(window.AudioContext) {
+            var samples = AMR.decode(data);
+            if (!samples) {
+                alert('Failed to decode!');
+                return;
+            }
+            playPcm(samples);
+        } else {
+            var context = new window.webkitAudioContext();
+            context.decodeAudioData(data.buffer, function(buffer) {
+                playSound(context, buffer);
+            })
         }
-        playPcm(samples);
     }
 
     function playPcm(samples) {
-        var ctx = new AudioContext();
-        var src = ctx.createBufferSource();
-        var buffer = ctx.createBuffer(1, samples.length, 8000);
+        var context = new AudioContext();
+        var buffer = context.createBuffer(1, samples.length, 8000);
         if (buffer.copyToChannel) {
             buffer.copyToChannel(samples, 0, 0)
         } else {
             var channelBuffer = buffer.getChannelData(0);
             channelBuffer.set(samples);
         }
+        playSound(context, buffer);
+    }
 
-        src.buffer = buffer;
-        src.connect(ctx.destination);
-		aaa = src ;
-		console.log(aaa);
-        src.start();
+    function playSound(context, buffer) {
+      var source = context.createBufferSource(); 
+      source.buffer = buffer;                    
+      source.connect(context.destination);       
+      source.start();                           
     }
 
 </script>
