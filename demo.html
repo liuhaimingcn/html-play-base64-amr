@@ -31,6 +31,19 @@
         return bytes;
     }
 
+        var gAudioContext;
+        function getAudioContext() {
+            if (!gAudioContext) {
+                if(window.AudioContext) {
+                    gAudioContext = new AudioContext();
+                } else {
+                    gAudioContext = new window.webkitAudioContext();
+                }
+            }
+            return gAudioContext;
+        }
+
+
     function playAmrArray(data) {
         if(window.AudioContext) {
             var samples = AMR.decode(data);
@@ -40,7 +53,7 @@
             }
             playPcm(samples);
         } else {
-            var context = new window.webkitAudioContext();
+            var context = getAudioContext();
             context.decodeAudioData(data.buffer, function(buffer) {
                 playSound(context, buffer);
             })
@@ -48,7 +61,7 @@
     }
 
     function playPcm(samples) {
-        var context = new AudioContext();
+        var context = getAudioContext();
         var buffer = context.createBuffer(1, samples.length, 8000);
         if (buffer.copyToChannel) {
             buffer.copyToChannel(samples, 0, 0)
